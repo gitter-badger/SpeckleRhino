@@ -202,12 +202,12 @@ namespace SpeckleRhino
           var uri = client.Client.BaseUrl + client.StreamId;
           if ( loadedClients.Contains( uri ) )
           {
-            Debug.WriteLine( "Dupe found: " + uri ); 
+            Debug.WriteLine( "Dupe found: " + uri );
             // need to block, maybe disposal will help
             client.Dispose();
           }
           else
-            loadedClients.Add(uri);
+            loadedClients.Add( uri );
         }
       }
 
@@ -299,6 +299,17 @@ namespace SpeckleRhino
     {
       var mySender = new RhinoSender( _payload, this );
       return true;
+    }
+
+    public void AddClientToStore( ISpeckleRhinoClient client )
+    {
+      var probe = UserClients.FirstOrDefault( c => c.GetClientId() == client.GetClientId() );
+      if ( probe != null )
+      {
+        throw new Exception( "Duplicate client found: " + client.GetClientId() );
+      }
+      else
+        UserClients.Add( client );
     }
 
     public bool RemoveClient( string _payload )

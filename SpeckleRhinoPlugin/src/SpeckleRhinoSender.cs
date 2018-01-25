@@ -72,7 +72,9 @@ namespace SpeckleRhino
 
               Context.NotifySpeckleFrame( "set-gl-load", "", "false" );
               Context.NotifySpeckleFrame( "client-add", StreamId, JsonConvert.SerializeObject( new { stream = Client.Stream, client = Client } ) );
-              Context.UserClients.Add( this );
+
+              //Context.UserClients.Add( this );
+              Context.AddClientToStore( this );
 
               InitTrackedObjects( InitPayload );
               DataSender.Start();
