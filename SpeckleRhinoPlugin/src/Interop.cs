@@ -55,7 +55,7 @@ namespace SpeckleRhino
       ReadUserAccounts();
 
       RhinoDoc.NewDocument += RhinoDoc_NewDocument;
-        
+
       RhinoDoc.EndOpenDocument += RhinoDoc_EndOpenDocument;
 
       RhinoDoc.BeginSaveDocument += RhinoDoc_BeginSaveDocument;
@@ -186,6 +186,8 @@ namespace SpeckleRhino
     {
       string[ ] receiverKeys = RhinoDoc.ActiveDoc.Strings.GetEntryNames( "speckle-client-receivers" );
 
+      List<string> loadedClients = new List<string>();
+
       foreach ( string rec in receiverKeys )
       {
         byte[ ] serialisedClient = Convert.FromBase64String( RhinoDoc.ActiveDoc.Strings.GetValue( "speckle-client-receivers", rec ) );
@@ -195,6 +197,17 @@ namespace SpeckleRhino
           ms.Seek( 0, SeekOrigin.Begin );
           RhinoReceiver client = ( RhinoReceiver ) new BinaryFormatter().Deserialize( ms );
           client.Context = this;
+
+          // Dupe defense
+          var uri = client.Client.BaseUrl + client.StreamId;
+          if ( loadedClients.Contains( uri ) )
+          {
+            Debug.WriteLine( "Dupe found: " + uri ); 
+            // need to block, maybe disposal will help
+            client.Dispose();
+          }
+          else
+            loadedClients.Add(uri);
         }
       }
 
@@ -209,7 +222,20 @@ namespace SpeckleRhino
           ms.Write( serialisedClient, 0, serialisedClient.Length );
           ms.Seek( 0, SeekOrigin.Begin );
           RhinoSender client = ( RhinoSender ) new BinaryFormatter().Deserialize( ms );
-          client.CompleteDeserialisation( this );
+
+          // Dupe defense
+          var uri = client.Client.BaseUrl + client.StreamId;
+          if ( loadedClients.Contains( uri ) )
+          {
+            Debug.WriteLine( "Dupe found: " + uri );
+            // need to block, maybe disposal will help
+            client.Dispose();
+          }
+          else
+          {
+            client.CompleteDeserialisation( this );
+            loadedClients.Add( uri );
+          }
         }
       }
     }
@@ -305,8 +331,9 @@ namespace SpeckleRhino
       if ( !SpeckleIsReady )
         return;
       var script = string.Format( "window.EventBus.$emit('{0}', '{1}', '{2}')", EventType, StreamId, EventInfo );
-      try { 
-      Browser.GetMainFrame().EvaluateScriptAsync( script );
+      try
+      {
+        Browser.GetMainFrame().EvaluateScriptAsync( script );
       }
       catch
       {
