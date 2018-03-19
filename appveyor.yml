@@ -17,6 +17,10 @@ before_build:
   - cd SpeckleView
   - npm install
   - npm run build
+  # install npm deps for SpeckleAdmin & build
+  - cd ../SpeckleAdmin
+  - npm install
+  - npm run build
   # return to build dir
   - cd ..
 build:
