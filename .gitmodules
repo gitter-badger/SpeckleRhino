@@ -4,3 +4,6 @@
 [submodule "SpeckleView"]
 	path = SpeckleView
 	url = https://github.com/speckleworks/SpeckleView.git
+[submodule "SpeckleAdmin"]
+	path = SpeckleAdmin
+	url = https://github.com/speckleworks/SpeckleAdmin
